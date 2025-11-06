@@ -1,7 +1,21 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { WorkoutLog } from "@/interfaces/types";
-
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { Calendar } from "../ui/calendar"
+import { Button } from "../ui/button"
+import { ChevronDownIcon } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "../ui/input-group";
 
 interface AddWorkoutProps {
     logs: WorkoutLog[];
@@ -37,82 +51,134 @@ export default function AddWorkout({ logs, setLogs, showAddForm, setShowAddForm 
         setShowAddForm(false);
     };
 
+    const [open, setOpen] = useState(false)
+    const [date, setDate] = useState<Date | undefined>(undefined)
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>New Workout</CardTitle>
-                <CardDescription>Add a new workout to your log</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid gap-4">
-                    <div className="grid gap-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Day Number
-                        </label>
-                        <input
-                            type="number"
-                            placeholder="21"
-                            value={newLog.day || ''}
-                            onChange={(e) => setNewLog({ ...newLog, day: parseInt(e.target.value) || 0 })}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Date
-                        </label>
-                        <input
+        <AnimatePresence>
+            <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -20, opacity: 0 }}
+                transition={{
+                    type: "tween",
+                    stiffness: 400,
+                    damping: 40,
+                    duration: 0.3
+                }}
+            >
+                <Card>
+                    <CardHeader>
+                        <CardTitle>New Workout</CardTitle>
+                        <CardDescription>Add a new workout to your log</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+
+                        <div className="grid gap-4">
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Day Number
+                                </label>
+                                <input
+                                    type="number"
+                                    // placeholder="21"
+                                    value={logs.length + 1 || ''}
+                                    onChange={(e) => setNewLog({ ...newLog, day: parseInt(e.target.value) || 0 })}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Date
+                                </label>
+                                {/* <input
                             type="date"
                             value={newLog.date}
                             onChange={(e) => setNewLog({ ...newLog, date: e.target.value })}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Activity Type
-                        </label>
-                        <select
-                            value={newLog.type}
-                            onChange={(e) => setNewLog({ ...newLog, type: e.target.value as 'run' | 'calisthenics' })}
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="run">Run</option>
-                            <option value="calisthenics">Calisthenics</option>
-                        </select>
-                    </div>
-                    <div className="grid gap-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Duration (minutes)
-                        </label>
-                        <input
-                            type="number"
-                            placeholder="25"
-                            value={newLog.duration || ''}
-                            onChange={(e) => setNewLog({ ...newLog, duration: parseInt(e.target.value) || 0 })}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Notes
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="25 minutes run non-stop"
-                            value={newLog.notes}
-                            onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        />
-                    </div>
-                    <button
-                        onClick={addLog}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
-                        Save Workout
-                    </button>
-                </div>
-            </CardContent>
-        </Card>
+                        /> */}
+
+                                <Popover open={open} onOpenChange={setOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            id="date"
+                                            className="w-48 justify-between font-normal"
+                                        >
+                                            {date ? date.toLocaleDateString() : "Select date"}
+                                            <ChevronDownIcon />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            captionLayout="dropdown"
+                                            onSelect={(selectedDate) => {
+                                                if (selectedDate) {
+                                                    const formattedDate = selectedDate.toISOString().split('T')[0];
+                                                    setDate(selectedDate);
+                                                    setNewLog({ ...newLog, date: formattedDate });
+                                                    setOpen(false);
+                                                }
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Activity Type
+                                </label>
+
+                                <Select>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Activity Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="run" onSelect={(e) => setNewLog({ ...newLog, type: 'run' })}>Run</SelectItem>
+                                        <SelectItem value="walk" onSelect={(e) => setNewLog({ ...newLog, type: 'walk' })}>Walk</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Duration (minutes)
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="25"
+                                    value={newLog.duration || ''}
+                                    onChange={(e) => setNewLog({ ...newLog, duration: parseInt(e.target.value) || 0 })}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Notes
+                                </label>
+
+                                <InputGroup>
+                                    <InputGroupTextarea placeholder="Enter your notes" value={newLog.notes} onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })} />
+                                    <InputGroupAddon align="block-end">
+                                        <InputGroupText className="text-muted-foreground text-xs">
+                                            {newLog.notes.length}/120 characters
+                                        </InputGroupText>
+                                    </InputGroupAddon>
+                                </InputGroup>
+                            </div>
+                            <button
+                                onClick={addLog}
+                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                            >
+                                Save Workout
+                            </button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        </AnimatePresence>
     )
 }

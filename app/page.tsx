@@ -14,7 +14,6 @@ import DurationTrends from '@/components/actions/DurationTrends';
 import ActivityMetrics from '@/components/actions/ActivityMetrics';
 
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
 import { ChartBarStacked } from '@/components/ui/BarChart';
 import { useAccount } from 'wagmi';
 import Navigation from '@/components/actions/Navigation';
@@ -23,15 +22,15 @@ import Navigation from '@/components/actions/Navigation';
 export default function FitnessDashboard() {
   const [logs, setLogs] = useState<WorkoutLog[]>([
     { id: 1, day: 21, date: '2024-10-10', type: 'run', duration: 25, notes: '25 minutes run non-stop' },
-    { id: 2, day: 22, date: '2024-10-11', type: 'calisthenics', duration: 30, notes: 'Push-ups and planks' },
+    { id: 2, day: 22, date: '2024-10-11', type: 'walk', duration: 30, notes: 'Push-ups and planks' },
     { id: 3, day: 23, date: '2024-10-12', type: 'run', duration: 20, notes: 'Easy recovery run' },
-    { id: 4, day: 25, date: '2024-10-14', type: 'calisthenics', duration: 35, notes: 'Full body workout' },
+    { id: 4, day: 25, date: '2024-10-14', type: 'walk', duration: 35, notes: 'Full body workout' },
     { id: 5, day: 27, date: '2024-10-16', type: 'run', duration: 28, notes: 'Interval training' },
     { id: 6, day: 28, date: '2024-10-17', type: 'run', duration: 22, notes: 'Morning jog' },
-    { id: 7, day: 30, date: '2024-10-19', type: 'calisthenics', duration: 40, notes: 'Pull-ups and dips' },
+    { id: 7, day: 30, date: '2024-10-19', type: 'walk', duration: 40, notes: 'Pull-ups and dips' },
     { id: 8, day: 34, date: '2024-10-23', type: 'run', duration: 24, notes: 'Elevated run' },
     { id: 9, day: 35, date: '2024-10-24', type: 'run', duration: 30, notes: 'Distance run' },
-    { id: 10, day: 37, date: '2024-10-26', type: 'calisthenics', duration: 45, notes: 'Core focus' },
+    { id: 10, day: 37, date: '2024-10-26', type: 'walk', duration: 45, notes: 'Core focus' },
   ]);
 
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
@@ -190,7 +189,7 @@ export default function FitnessDashboard() {
           <div className="mx-auto grid max-w-236 flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
               <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                Just Log
+                just log
               </h1>
               <div className="hidden items-center gap-2 md:ml-auto md:flex">
                 {/* Add Workout Button */}

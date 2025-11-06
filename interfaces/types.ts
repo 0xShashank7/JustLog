@@ -12,7 +12,7 @@ export interface WorkoutLog {
     id: number;
     day: number;
     date: string;
-    type: 'run' | 'calisthenics';
+    type: 'run' | 'walk';
     duration: number;
     notes: string;
 }
