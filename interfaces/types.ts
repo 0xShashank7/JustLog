@@ -2,7 +2,7 @@ export interface FitnessLog {
     id: string;  // or number, depending on what type your IDs are
     day: string;
     date: string;
-    type: string;  // you might want to make this more specific with a union type
+    workout_type: string;  // you might want to make this more specific with a union type
     duration: string;
     notes: string;
 }
@@ -12,7 +12,7 @@ export interface WorkoutLog {
     id: number;
     day: number;
     date: string;
-    type: 'run' | 'walk';
+    workout_type: 'run' | 'walk' | 'na';
     duration: number;
     notes: string;
 }
@@ -34,7 +34,7 @@ export interface ChartData {
 export interface DurationData {
     day: string;
     duration: number;
-    type: string;
+    workout_type: string;
 }
 
 export interface ActivityData {

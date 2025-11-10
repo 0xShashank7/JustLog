@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { redirect } from 'next/navigation'
 
 
@@ -14,39 +14,31 @@ import DurationTrends from '@/components/actions/DurationTrends';
 import ActivityMetrics from '@/components/actions/ActivityMetrics';
 
 import { createClient } from '@/lib/supabase/client';
-import { ChartBarStacked } from '@/components/ui/BarChart';
+import { ChartBarStacked } from '@/components/actions/BarChart';
 import { useAccount } from 'wagmi';
-import Navigation from '@/components/actions/Navigation';
+import { toast } from 'sonner';
 
 
 export default function FitnessDashboard() {
-  const [logs, setLogs] = useState<WorkoutLog[]>([
-    { id: 1, day: 21, date: '2024-10-10', type: 'run', duration: 25, notes: '25 minutes run non-stop' },
-    { id: 2, day: 22, date: '2024-10-11', type: 'walk', duration: 30, notes: 'Push-ups and planks' },
-    { id: 3, day: 23, date: '2024-10-12', type: 'run', duration: 20, notes: 'Easy recovery run' },
-    { id: 4, day: 25, date: '2024-10-14', type: 'walk', duration: 35, notes: 'Full body workout' },
-    { id: 5, day: 27, date: '2024-10-16', type: 'run', duration: 28, notes: 'Interval training' },
-    { id: 6, day: 28, date: '2024-10-17', type: 'run', duration: 22, notes: 'Morning jog' },
-    { id: 7, day: 30, date: '2024-10-19', type: 'walk', duration: 40, notes: 'Pull-ups and dips' },
-    { id: 8, day: 34, date: '2024-10-23', type: 'run', duration: 24, notes: 'Elevated run' },
-    { id: 9, day: 35, date: '2024-10-24', type: 'run', duration: 30, notes: 'Distance run' },
-    { id: 10, day: 37, date: '2024-10-26', type: 'walk', duration: 45, notes: 'Core focus' },
-  ]);
 
-  const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
   const supabase = createClient();
+  const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWorkouts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('workouts').select('*');
+    if (error) {
+      console.error('Error fetching workouts:', error);
+    } else {
+      console.log('workouts data ', data)
+      setWorkouts(data);
+    }
+    setLoading(false);
+  };
+
 
   useEffect(() => {
-    debugger;
-    const fetchWorkouts = async () => {
-      const { data, error } = await supabase.from('workouts').select('*');
-      if (error) {
-        console.error('Error fetching workouts:', error);
-      } else {
-        console.log('workouts data ', data)
-        setWorkouts(data);
-      }
-    };
     fetchWorkouts();
   }, [])
 
@@ -54,14 +46,14 @@ export default function FitnessDashboard() {
 
 
   const calculateMetrics = (): Metrics | null => {
-    if (logs.length === 0) return null;
+    if (workouts.length === 0) return null;
 
-    const sortedLogs = [...logs].sort((a, b) => a.day - b.day);
+    const sortedLogs = [...workouts].sort((a, b) => a.day - b.day);
     const totalDays = sortedLogs[sortedLogs.length - 1].day - sortedLogs[0].day + 1;
-    const loggedDays = logs.length;
+    const loggedDays = workouts.length;
     const consistencyRate = ((loggedDays / totalDays) * 100).toFixed(1);
 
-    const avgDuration = (logs.reduce((sum, log) => sum + log.duration, 0) / logs.length).toFixed(1);
+    const avgDuration = (workouts.reduce((sum, log) => sum + log.duration, 0) / workouts.length).toFixed(1);
 
     let currentStreak = 0;
     let longestStreak = 0;
@@ -86,8 +78,8 @@ export default function FitnessDashboard() {
       }
     }
 
-    const distribution = logs.reduce((acc, log) => {
-      acc[log.type] = (acc[log.type] || 0) + 1;
+    const distribution = workouts.reduce((acc, log) => {
+      acc[log.workout_type] = (acc[log.workout_type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -103,7 +95,7 @@ export default function FitnessDashboard() {
 
   const prepareWeeklyData = (): ChartData[] => {
     const weeks: Record<number, number> = {};
-    logs.forEach(log => {
+    workouts.forEach(log => {
       const week = Math.floor(log.day / 7);
       weeks[week] = (weeks[week] || 0) + 1;
     });
@@ -115,18 +107,18 @@ export default function FitnessDashboard() {
   };
 
   const prepareDurationData = (): DurationData[] => {
-    return [...logs]
+    return [...workouts]
       .sort((a, b) => a.day - b.day)
       .map(log => ({
         day: `Day ${log.day}`,
         duration: log.duration,
-        type: log.type
+        workout_type: log.workout_type
       }));
   };
 
   const prepareActivityDistribution = (): ActivityData[] => {
-    const distribution = logs.reduce((acc, log) => {
-      acc[log.type] = (acc[log.type] || 0) + 1;
+    const distribution = workouts.reduce((acc, log) => {
+      acc[log.workout_type] = (acc[log.workout_type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -143,13 +135,47 @@ export default function FitnessDashboard() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const deleteLog = (id: number) => {
-    setLogs(logs.filter(log => log.id !== id));
+  const deleteLog = async (id: number) => {
+    setWorkouts(workouts.filter(log => log.id !== id));
+    const toastId = toast.loading('Deleting workout...');
+    try {
+      const { data, error } = await supabase.from('workouts').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting workout:', error);
+        toast.error('Error deleting workout!', { id: toastId });
+      } else {
+        toast.success('Workout deleted successfully!', { id: toastId });
+      }
+    }
+    catch (error) {
+      console.error('Error deleting workout:', error);
+      toast.error('Error deleting workout!', { id: toastId });
+    }
+
   };
 
-  const updateLog = (id: number, updates: Partial<WorkoutLog>) => {
-    setLogs(logs.map(log => log.id === id ? { ...log, ...updates } : log));
+  const updateLog = async (id: number, updates: Partial<WorkoutLog>) => {
+
+    setWorkouts(workouts.map(log => log.id === id ? { ...log, ...updates } : log));
+
+    const toastId = toast.loading('Updating workout...');
+    try {
+      const { data, error } = await supabase.from('workouts').update(updates).eq('id', id);
+      if (error) {
+        console.error('Error updating workout:', error);
+        toast.error('Error updating workout!', { id: toastId });
+      } else {
+        toast.success('Workout updated successfully!', { id: toastId });
+      }
+    }
+    catch (error) {
+      console.error('Error updating workout:', error);
+      toast.error('Error updating workout!', { id: toastId });
+    }
+
     setEditingId(null);
+
+
   };
 
   const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
@@ -188,32 +214,42 @@ export default function FitnessDashboard() {
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div className="mx-auto grid max-w-236 flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
-              <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                just log
+              <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-bold tracking-tight sm:grow-0">
+                Just log
               </h1>
               <div className="hidden items-center gap-2 md:ml-auto md:flex">
                 {/* Add Workout Button */}
 
-                <ConnectButton />
+                {
+                  isConnected ?
+                    <h2 className='mr-2' >Hello, User {isConnected}</h2> :
+                    <ConnectButton />
+                }
 
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 transition-all duration-200 ease-in-out"
                 >
                   {showAddForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap transition-all duration-200 ease-in-out">
                     {showAddForm ? 'Cancel' : 'Add Workout'}
                   </span>
                 </button>
               </div>
             </div>
 
+            {loading && (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            )}
+
             {/* Add Workout */}
-            {showAddForm && (
+            {showAddForm && !loading && (
               <>
                 <AddWorkout
-                  logs={logs}
-                  setLogs={setLogs}
+                  logs={workouts}
+                  setLogs={setWorkouts}
                   showAddForm={showAddForm}
                   setShowAddForm={setShowAddForm}
                 />
@@ -221,22 +257,22 @@ export default function FitnessDashboard() {
               </>
             )}
 
-            <ChartBarStacked />
+            {!loading && <ChartBarStacked />}
 
 
             {/* Metrics Header */}
-            {metrics && (
+            {metrics && !loading && (
               <MetricsComponent metrics={metrics} />
             )}
 
             {/* Activity Metrics */}
-            <ActivityMetrics weeklyData={weeklyData} activityData={activityData} />
+            {!loading && <ActivityMetrics weeklyData={weeklyData} activityData={activityData} />}
 
             {/* Duration Trends */}
-            <DurationTrends durationData={durationData} />
+            {!loading && <DurationTrends durationData={durationData} />}
 
             {/* Recent Workouts */}
-            <RecentWorkouts logs={logs} editingId={editingId} setEditingId={setEditingId} updateLog={updateLog} deleteLog={deleteLog} />
+            {!loading && <RecentWorkouts logs={workouts} editingId={editingId} setEditingId={setEditingId} updateLog={updateLog} deleteLog={deleteLog} />}
           </div>
         </main>
       </div>

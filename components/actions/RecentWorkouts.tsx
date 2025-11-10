@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CardHeader, Card, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { WorkoutLog } from '@/interfaces/types';
-import { Edit2, Save, Trash2 } from 'lucide-react';
+import { Edit2, Save, Trash2, RefreshCw } from 'lucide-react';
 
 interface RecentWorkoutsProps {
     logs: WorkoutLog[];
@@ -48,15 +48,16 @@ export default function RecentWorkouts({ logs, editingId, setEditingId, deleteLo
                                     </div>
                                     <div className="grid gap-2 sm:grid-cols-3">
                                         <select
-                                            defaultValue={log.type}
+                                            defaultValue={log.workout_type}
                                             onChange={(e) => {
                                                 const updatedLog = logs.find(l => l.id === log.id);
-                                                if (updatedLog) updatedLog.type = e.target.value as 'run' | 'calisthenics';
+                                                if (updatedLog) updatedLog.workout_type = e.target.value as 'run' | 'walk' | 'na';
                                             }}
                                             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                         >
                                             <option value="run">Run</option>
-                                            <option value="calisthenics">Calisthenics</option>
+                                            <option value="walk">Walk</option>
+                                            <option value="na">NA</option>
                                         </select>
                                         <input
                                             type="number"
@@ -83,11 +84,11 @@ export default function RecentWorkouts({ logs, editingId, setEditingId, deleteLo
                                     <div className="flex items-center gap-2 text-sm">
                                         <span className="font-semibold">Day {log.day}</span>
                                         <span className="text-muted-foreground">{log.date}</span>
-                                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${log.type === 'run'
+                                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${log.workout_type === 'run'
                                             ? 'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30'
                                             : 'bg-green-50 text-green-700 ring-green-700/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/30'
                                             }`}>
-                                            {log.type}
+                                            {log.workout_type}
                                         </span>
                                         <span className="font-medium">{log.duration}m</span>
                                     </div>
