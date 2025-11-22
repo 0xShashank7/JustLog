@@ -17,6 +17,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ChartBarStacked } from '@/components/actions/BarChart';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { CardTitle } from '@/components/ui/card';
 
 
 export default function FitnessDashboard() {
@@ -28,6 +29,7 @@ export default function FitnessDashboard() {
   const fetchWorkouts = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('workouts').select('*');
+    debugger;
     if (error) {
       console.error('Error fetching workouts:', error);
     } else {
@@ -46,12 +48,24 @@ export default function FitnessDashboard() {
 
 
   const calculateMetrics = (): Metrics | null => {
-    if (workouts.length === 0) return null;
+
+    if (workouts.length === 0) {
+
+      toast.warning('Please add data')
+      return null
+    };
 
     const sortedLogs = [...workouts].sort((a, b) => a.day - b.day);
-    const totalDays = sortedLogs[sortedLogs.length - 1].day - sortedLogs[0].day + 1;
+
     const loggedDays = workouts.length;
-    const consistencyRate = ((loggedDays / totalDays) * 100).toFixed(1);
+
+    const todayDate = new Date().toISOString().slice(0, 10); // current date
+    const firstLoggedDate = sortedLogs[0].date;
+    const dateDifference = Math.round((new Date(todayDate).getTime() - new Date(firstLoggedDate).getTime()) / (1000 * 60 * 60 * 24)); // difference in days
+    const loggedDaysTillToday = dateDifference + 1;
+
+    const consistencyRate = ((loggedDays / loggedDaysTillToday) * 100).toFixed(1);
+
 
     const avgDuration = (workouts.reduce((sum, log) => sum + log.duration, 0) / workouts.length).toFixed(1);
 
@@ -106,6 +120,20 @@ export default function FitnessDashboard() {
     }));
   };
 
+  const prepareMonthlyData = (): ChartData[] => {
+    const months: Record<number, number> = {};
+    workouts.forEach(log => {
+      const month = Math.floor(log.day / 30);
+      months[month] = (months[month] || 0) + 1;
+    });
+    debugger;
+
+    return Object.entries(months).map(([month, count]) => ({
+      month: `Month ${parseInt(month) + 1}`,
+      workouts: count
+    }));
+  };
+
   const prepareDurationData = (): DurationData[] => {
     return [...workouts]
       .sort((a, b) => a.day - b.day)
@@ -132,6 +160,8 @@ export default function FitnessDashboard() {
   const weeklyData = prepareWeeklyData();
   const durationData = prepareDurationData();
   const activityData = prepareActivityDistribution();
+  const monthsChartData = prepareMonthlyData()
+  console.log(monthsChartData)
 
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -238,6 +268,11 @@ export default function FitnessDashboard() {
               </div>
             </div>
 
+            {
+              workouts.length === 0 &&
+              <CardTitle>Please add run logs to see metrics</CardTitle>
+            }
+
             {loading && (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -257,9 +292,6 @@ export default function FitnessDashboard() {
               </>
             )}
 
-            {!loading && <ChartBarStacked />}
-
-
             {/* Metrics Header */}
             {metrics && !loading && (
               <MetricsComponent metrics={metrics} />
@@ -270,6 +302,8 @@ export default function FitnessDashboard() {
 
             {/* Duration Trends */}
             {!loading && <DurationTrends durationData={durationData} />}
+
+            {!loading && <ChartBarStacked />}
 
             {/* Recent Workouts */}
             {!loading && <RecentWorkouts logs={workouts} editingId={editingId} setEditingId={setEditingId} updateLog={updateLog} deleteLog={deleteLog} />}

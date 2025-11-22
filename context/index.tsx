@@ -32,7 +32,7 @@ const modal = createAppKit({
     features: {
         analytics: true, // Optional - defaults to your Cloud configuration,
         email: true,
-        socials: ['google', 'x', 'github', 'apple'],
+        // socials: ['google', 'x', 'github', 'apple'],
         emailShowWallets: true,
     }
 })

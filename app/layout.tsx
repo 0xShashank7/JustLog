@@ -4,6 +4,8 @@ import "./globals.css";
 import { headers } from "next/headers";
 import ContextProvider from "@/context";
 import { Toaster } from "sonner";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { ThemeScript } from "./components/ThemeScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,17 +32,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ContextProvider cookies={cookies}>{children}</ContextProvider>
-        <Toaster
-          position="top-right"
-          richColors
-          duration={3000}
-        />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ContextProvider cookies={cookies}>
+          {children}
+          <ThemeToggle />
+        </ContextProvider>
+        <Toaster position="top-right" richColors duration={3000} />
       </body>
     </html>
-  );
+  )
 }

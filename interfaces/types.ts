@@ -27,8 +27,9 @@ export interface Metrics {
 }
 
 export interface ChartData {
-    week: string;
-    workouts: number;
+    week?: string;
+    month?: string;
+    workouts?: number;
 }
 
 export interface DurationData {
