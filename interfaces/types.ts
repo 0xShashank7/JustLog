@@ -36,6 +36,8 @@ export interface DurationData {
     day: string;
     duration: number;
     workout_type: string;
+    date?: string;
+
 }
 
 export interface ActivityData {

@@ -18,6 +18,7 @@ import { ChartBarStacked } from '@/components/actions/BarChart';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
 import { CardTitle } from '@/components/ui/card';
+import { ChartLineDefault } from '@/components/actions/LineChartData';
 
 
 export default function FitnessDashboard() {
@@ -26,17 +27,24 @@ export default function FitnessDashboard() {
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
   const [loading, setLoading] = useState(true);
 
+
+
   const fetchWorkouts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('workouts').select('*');
-    debugger;
-    if (error) {
-      console.error('Error fetching workouts:', error);
-    } else {
-      console.log('workouts data ', data)
-      setWorkouts(data);
+    try {
+      const { data, error } = await supabase.from('workouts').select('*');
+      if (error) {
+        console.error('Error fetching workouts:', error);
+      } else {
+        setWorkouts(data);
+        setLoading(false);
+      }
     }
-    setLoading(false);
+    catch (error) {
+      console.error('Error fetching workouts:', error);
+    }
+    finally {
+      setLoading(false);
+    }
   };
 
 
@@ -126,8 +134,6 @@ export default function FitnessDashboard() {
       const month = Math.floor(log.day / 30);
       months[month] = (months[month] || 0) + 1;
     });
-    debugger;
-
     return Object.entries(months).map(([month, count]) => ({
       month: `Month ${parseInt(month) + 1}`,
       workouts: count
@@ -140,7 +146,12 @@ export default function FitnessDashboard() {
       .map(log => ({
         day: `Day ${log.day}`,
         duration: log.duration,
-        workout_type: log.workout_type
+        workout_type: log.workout_type,
+        date: new Date(log.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
       }));
   };
 
@@ -155,6 +166,7 @@ export default function FitnessDashboard() {
       value: count
     }));
   };
+
 
   const metrics = calculateMetrics();
   const weeklyData = prepareWeeklyData();
@@ -202,10 +214,7 @@ export default function FitnessDashboard() {
       console.error('Error updating workout:', error);
       toast.error('Error updating workout!', { id: toastId });
     }
-
     setEditingId(null);
-
-
   };
 
   const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
@@ -242,7 +251,7 @@ export default function FitnessDashboard() {
         {/* <Navigation /> */}
 
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <div className="mx-auto grid max-w-236 flex-1 auto-rows-max gap-4">
+          <div className="mx-auto grid lg:min-w-xl max-w-236 flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
               <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-bold tracking-tight sm:grow-0">
                 Just log
@@ -269,7 +278,7 @@ export default function FitnessDashboard() {
             </div>
 
             {
-              workouts.length === 0 &&
+              workouts.length === 0 && !loading &&
               <CardTitle>Please add run logs to see metrics</CardTitle>
             }
 
@@ -296,6 +305,7 @@ export default function FitnessDashboard() {
             {metrics && !loading && (
               <MetricsComponent metrics={metrics} />
             )}
+            {!loading && <ChartLineDefault durationData={durationData} />}
 
             {/* Activity Metrics */}
             {!loading && <ActivityMetrics weeklyData={weeklyData} activityData={activityData} />}
