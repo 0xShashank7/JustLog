@@ -1,101 +1,306 @@
-import Image from "next/image";
+"use client"
+
+import React, { useEffect, useState } from 'react';
+import { Loader2, LogIn, Plus, X } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { WorkoutLog, Metrics, ChartData, DurationData, ActivityData, CustomTooltipProps, } from '../../interfaces/types';
+import { CardTitle } from '../../components/ui/card';
+import AddWorkout from '../../components/actions/AddWorkout';
+import MetricsComponent from '../../components/actions/Metrics';
+import { ChartLineDefault } from '../../components/actions/LineChartData';
+import ActivityMetrics from '../../components/actions/ActivityMetrics';
+import DurationTrends from '../../components/actions/DurationTrends';
+import { ChartBarStacked } from '../../components/actions/BarChart';
+import RecentWorkouts from '../../components/actions/RecentWorkouts';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [workouts, setWorkouts] = useState<WorkoutLog[]>([
+    {
+      id: 1,
+      date: new Date().toISOString().split('T')[0],
+      day: 1,
+      workout_type: 'run',
+      duration: 30,
+      notes: 'Morning run'
+    },
+    {
+      id: 2,
+      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      day: 2,
+      workout_type: 'run',
+      duration: 45,
+      notes: 'Evening cycling'
+    }
+  ]);
+
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const savedWorkouts = localStorage.getItem('workouts');
+    if (savedWorkouts) {
+      setWorkouts(JSON.parse(savedWorkouts));
+    }
+  }, []);
+
+  // Save to localStorage whenever workouts change
+  useEffect(() => {
+    if (workouts.length > 0) {
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+    }
+  }, [workouts]);
+
+  const fetchWorkouts = async () => {
+    setLoading(true);
+    try {
+      // Load from localStorage if available, otherwise use the initial state
+      const savedWorkouts = localStorage.getItem('workouts');
+      if (savedWorkouts) {
+        setWorkouts(JSON.parse(savedWorkouts));
+      }
+      // If no saved workouts, the initial state will be used
+    } catch (error) {
+      console.error('Error loading workouts:', error);
+      toast.error('Error loading workouts!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchWorkouts();
+  }, [])
+
+  const [showAddForm, setShowAddForm] = useState(false);
+
+
+  const calculateMetrics = (): Metrics | null => {
+
+    if (workouts.length === 0) {
+
+      toast.warning('Please add data')
+      return null
+    };
+
+    const sortedLogs = [...workouts].sort((a, b) => a.day - b.day);
+
+    const loggedDays = workouts.length;
+
+    const todayDate = new Date().toISOString().slice(0, 10); // current date
+    const firstLoggedDate = sortedLogs[0].date;
+    const dateDifference = Math.round((new Date(todayDate).getTime() - new Date(firstLoggedDate).getTime()) / (1000 * 60 * 60 * 24)); // difference in days
+    const loggedDaysTillToday = dateDifference + 1;
+
+    const consistencyRate = ((loggedDays / loggedDaysTillToday) * 100).toFixed(1);
+
+
+    const avgDuration = (workouts.reduce((sum, log) => sum + log.duration, 0) / workouts.length).toFixed(1);
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 1;
+
+    for (let i = 1; i < sortedLogs.length; i++) {
+      if (sortedLogs[i].day - sortedLogs[i - 1].day === 1) {
+        tempStreak++;
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, tempStreak);
+
+    const today = sortedLogs[sortedLogs.length - 1].day;
+    for (let i = sortedLogs.length - 1; i >= 0; i--) {
+      if (today - sortedLogs[i].day === sortedLogs.length - 1 - i) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    const distribution = workouts.reduce((acc, log) => {
+      acc[log.workout_type] = (acc[log.workout_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      consistencyRate,
+      avgDuration,
+      currentStreak,
+      longestStreak,
+      totalWorkouts: loggedDays,
+      distribution
+    };
+  };
+
+  const prepareWeeklyData = (): ChartData[] => {
+    const weeks: Record<number, number> = {};
+    workouts.forEach(log => {
+      const week = Math.floor(log.day / 7);
+      weeks[week] = (weeks[week] || 0) + 1;
+    });
+
+    return Object.entries(weeks).map(([week, count]) => ({
+      week: `Week ${parseInt(week) + 1}`,
+      workouts: count
+    }));
+  };
+
+  const prepareMonthlyData = (): ChartData[] => {
+    const months: Record<number, number> = {};
+    workouts.forEach(log => {
+      const month = Math.floor(log.day / 30);
+      months[month] = (months[month] || 0) + 1;
+    });
+    return Object.entries(months).map(([month, count]) => ({
+      month: `Month ${parseInt(month) + 1}`,
+      workouts: count
+    }));
+  };
+
+  const prepareDurationData = (): DurationData[] => {
+    return [...workouts]
+      .sort((a, b) => a.day - b.day)
+      .map(log => ({
+        day: `Day ${log.day}`,
+        duration: log.duration,
+        workout_type: log.workout_type,
+        date: new Date(log.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      }));
+  };
+
+  const prepareActivityDistribution = (): ActivityData[] => {
+    const distribution = workouts.reduce((acc, log) => {
+      acc[log.workout_type] = (acc[log.workout_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(distribution).map(([type, count]) => ({
+      name: type.charAt(0).toUpperCase() + type.slice(1),
+      value: count
+    }));
+  };
+
+
+  const metrics = calculateMetrics();
+  const weeklyData = prepareWeeklyData();
+  const durationData = prepareDurationData();
+  const activityData = prepareActivityDistribution();
+  const monthsChartData = prepareMonthlyData()
+  console.log(monthsChartData)
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const deleteLog = async (id: number) => {
+    const toastId = toast.loading('Deleting workout...');
+    try {
+      setWorkouts(prevWorkouts => {
+        const updatedWorkouts = prevWorkouts.filter(log => log.id !== id);
+        return updatedWorkouts;
+      });
+      toast.success('Workout deleted successfully!', { id: toastId });
+    }
+    catch (error) {
+      console.error('Error deleting workout:', error);
+      toast.error('Error deleting workout!', { id: toastId });
+    }
+
+  };
+
+  const updateLog = async (id: number, updates: Partial<WorkoutLog>) => {
+
+    const toastId = toast.loading('Updating workout...');
+    try {
+      setWorkouts(prevWorkouts => {
+        return prevWorkouts.map(log =>
+          log.id === id ? { ...log, ...updates } : log
+        );
+      });
+      toast.success('Workout updated successfully!', { id: toastId });
+    } catch (error) {
+      console.error('Error updating workout:', error);
+      toast.error('Error updating workout!', { id: toastId });
+    }
+
+    setEditingId(null);
+  };
+
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-background">
+      <div className="flex flex-col sm:gap-4 sm:py-4">
+        {/* <Navigation /> */}
+
+        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+          <div className="mx-auto grid lg:min-w-xl max-w-236 flex-1 auto-rows-max gap-4">
+            <div className="flex items-center gap-4">
+              <h1 className="flex-1 text-red-400 shrink-0 whitespace-nowrap text-xl font-bold tracking-tight sm:grow-0">
+                Just log
+              </h1>
+              <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                <button
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 transition-all duration-200 ease-in-out"
+                >
+                  {showAddForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap transition-all duration-200 ease-in-out">
+                    {showAddForm ? 'Cancel' : 'Add Workout'}
+                  </span>
+                </button>
+
+              </div>
+            </div>
+
+            {
+              workouts.length === 0 && !loading &&
+              <CardTitle>Please add run logs to see metrics</CardTitle>
+            }
+
+            {loading && (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            )}
+
+            {/* Add Workout */}
+            {showAddForm && !loading && (
+              <>
+                <AddWorkout
+                  logs={workouts}
+                  setLogs={setWorkouts}
+                  showAddForm={showAddForm}
+                  setShowAddForm={setShowAddForm}
+                />
+
+              </>
+            )}
+
+            {/* Metrics Header */}
+            {metrics && !loading && (
+              <MetricsComponent metrics={metrics} />
+            )}
+            {!loading && <ChartLineDefault durationData={durationData} />}
+
+            {/* Activity Metrics */}
+            {!loading && <ActivityMetrics weeklyData={weeklyData} activityData={activityData} />}
+
+            {/* Duration Trends */}
+            {!loading && <DurationTrends durationData={durationData} />}
+
+            {!loading && <ChartBarStacked />}
+
+            {/* Recent Workouts */}
+            {!loading && <RecentWorkouts logs={workouts} editingId={editingId} setEditingId={setEditingId} updateLog={updateLog} deleteLog={deleteLog} />}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
