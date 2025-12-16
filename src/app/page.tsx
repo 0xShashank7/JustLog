@@ -13,27 +13,11 @@ import ActivityMetrics from '../../components/actions/ActivityMetrics';
 import DurationTrends from '../../components/actions/DurationTrends';
 import { ChartBarStacked } from '../../components/actions/BarChart';
 import RecentWorkouts from '../../components/actions/RecentWorkouts';
+import { getWorkouts } from '@/server/users';
 
 export default function Home() {
 
-  const [workouts, setWorkouts] = useState<WorkoutLog[]>([
-    {
-      id: 1,
-      date: new Date().toISOString().split('T')[0],
-      day: 1,
-      workout_type: 'run',
-      duration: 30,
-      notes: 'Morning run'
-    },
-    {
-      id: 2,
-      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-      day: 2,
-      workout_type: 'run',
-      duration: 45,
-      notes: 'Evening cycling'
-    }
-  ]);
+  const [workouts, setWorkouts] = useState<WorkoutLog[]>([])
 
   const [loading, setLoading] = useState(true);
 
@@ -55,12 +39,13 @@ export default function Home() {
   const fetchWorkouts = async () => {
     setLoading(true);
     try {
-      // Load from localStorage if available, otherwise use the initial state
-      const savedWorkouts = localStorage.getItem('workouts');
-      if (savedWorkouts) {
-        setWorkouts(JSON.parse(savedWorkouts));
+
+      const data = await getWorkouts();
+      if (data) {
+        setWorkouts(data)
       }
-      // If no saved workouts, the initial state will be used
+
+
     } catch (error) {
       console.error('Error loading workouts:', error);
       toast.error('Error loading workouts!');
@@ -195,7 +180,6 @@ export default function Home() {
   const durationData = prepareDurationData();
   const activityData = prepareActivityDistribution();
   const monthsChartData = prepareMonthlyData()
-  console.log(monthsChartData)
 
   const [editingId, setEditingId] = useState<number | null>(null);
 

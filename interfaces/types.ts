@@ -9,12 +9,13 @@ export interface FitnessLog {
 
 
 export interface WorkoutLog {
-    id: number;
-    day: number;
+    id: string;
+    day: string;
     date: string;
-    workout_type: 'run' | 'walk' | 'na';
+    workout_type: string;
     duration: number;
-    notes: string;
+    notes: string | null;
+    kilometers: number;
 }
 
 export interface Metrics {

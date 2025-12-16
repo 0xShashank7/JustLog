@@ -17,7 +17,7 @@ import {
 } from "../../components/ui/select"
 import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "../ui/input-group";
 import { toast } from "sonner";
-
+import { createWorkout, getFirstUserId } from "../../server/users";
 interface AddWorkoutProps {
     logs: WorkoutLog[];
     setLogs: (logs: WorkoutLog[]) => void;
@@ -28,32 +28,45 @@ interface AddWorkoutProps {
 export default function AddWorkout({ logs, setLogs, showAddForm, setShowAddForm }: AddWorkoutProps) {
 
     const [newLog, setNewLog] = useState<Omit<WorkoutLog, 'id'>>({
-        day: logs.length > 0 ? Math.max(...logs.map(log => log.day)) + 1 : 1,
+        day: logs.length > 0 ? String(Math.max(...logs.map(log => Number(log.day))) + 1) : '1',
         date: '',
         workout_type: 'run',
         duration: 0,
+        kilometers: 0,
         notes: ''
     });
 
-    const addLog = () => {
+    const addLog = async () => {
         if (!newLog.day || !newLog.date || !newLog.duration || !newLog.workout_type) {
             toast.error('Please fill in all fields');
+            return;
+        }
+
+        const userId = await getFirstUserId();
+        if (!userId) {
+            console.error('No users found in the database');
             return;
         }
 
         const toastId = toast.loading('Adding workout...');
         try {
             const log: WorkoutLog = {
-                id: Date.now(), // Generate a unique ID using timestamp
+                id: Date.now().toString(), // Generate a unique ID using timestamp
                 day: newLog.day,
                 date: newLog.date,
                 workout_type: newLog.workout_type,
                 duration: newLog.duration,
+                kilometers: newLog.kilometers,
                 notes: newLog.notes
             };
 
             // Update the parent component's state
             setLogs([...logs, log]);
+
+            createWorkout({
+                ...log,
+                userId
+            })
 
             // Reset the form
             setNewLog({
@@ -61,8 +74,10 @@ export default function AddWorkout({ logs, setLogs, showAddForm, setShowAddForm 
                 date: '',
                 workout_type: 'run',
                 duration: 0,
+                kilometers: 0,
                 notes: ''
             });
+
 
             toast.success('Workout added successfully!', { id: toastId });
             setShowAddForm(false);
@@ -103,7 +118,7 @@ export default function AddWorkout({ logs, setLogs, showAddForm, setShowAddForm 
                                 <input
                                     type="number"
                                     value={newLog.day || ''}
-                                    onChange={(e) => setNewLog({ ...newLog, day: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) => setNewLog({ ...newLog, day: e.target.value })}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     min="1"
                                 />
